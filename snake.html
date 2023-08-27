@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Snake Game</title>
+</head>
+
+<body>
+    
+    <h1 class="element1" id="element1">Score: </h1>
+    <h1 class="score" id="score">0</h1>
+    <canvas class="gameCanvas" id="gameCanvas" width="300" height="300"></canvas>
+    <div class="popup" id="popup">
+        <h2 id="end">Game Over</h2>
+    </div>
+</body>
+<style>
+    #end{
+        padding:0;
+        top:50%;
+        left:50%;
+        text-align: center;
+        color:rgb(127, 142, 255);
+        font-size: 100px;
+    }
+    .element1{
+        float:left;
+        visibility: visible;
+        color:rgb(127, 142, 255);
+    }
+    .score{
+        padding-left:10px;
+        float:left;
+        visibility: visible;
+        color:rgb(127, 142, 255);
+    }
+    .gameCanvas{
+        padding:0;
+        margin:auto;
+        display:block;
+        width:500px;
+        visibility: visible;
+        }
+    .popup{
+        width:400px;
+        background:#ffff;
+        border-radius:6px;
+        position:absolute;
+        top:50%;
+        left:50%;
+        transform: translate(-50%,-50%) scale (0.1);
+        text-align:center;
+        padding:0 30px 30px;
+        color:#333;
+        visibility: hidden;
+        transition: tranform 0.4s, top 0.4s;
+    }
+    .open-popup{
+        visibility: visible;
+        top:50%;
+        transform:translate(-50%,-50%) scale(1);
+    }
+
+</style>
+        <script>
+            let popup=document.getElementById("popup");
+            const canvas= document.getElementById("gameCanvas");
+            const ctx = canvas.getContext("2d");
+            let dx=10;
+            let dy=0;
+            let score=0;
+            function borderColor(){
+                ctx.fillStyle = "lightpink";
+                ctx.strokeStyle = "purple";
+                ctx.lineWidth=10;
+                ctx.fillRect(0,0,canvas.width,canvas.height);
+                ctx.strokeRect(0,0,canvas.width,canvas.height);
+            }
+            
+            let snake = [  {x: 150, y: 150},  {x: 140, y: 150},  {x: 130, y: 150},  {x: 120, y: 150},  {x: 110, y: 150},];
+            function drawSnakePart(snakePart) {  
+                ctx.fillStyle = 'lightgreen';  
+                ctx.strokestyle = 'darkgreen';
+                ctx.lineWidth=1;
+                ctx.fillRect(snakePart.x, snakePart.y, 10, 10);  
+                ctx.strokeRect(snakePart.x, snakePart.y, 10, 10);
+            }
+            function drawSnake() {  
+                snake.forEach(drawSnakePart);
+            }
+            function advanceSnake(){
+                const head = {x:snake[0].x+dx, y:snake[0].y+dy};
+                snake.unshift(head);
+                const didEatFood = snake[0].x === foodX && snake[0].y === foodY;  
+                if (didEatFood) {    
+                    createFood(); 
+                    score += 10;    
+                    document.getElementById('score').innerHTML = score; 
+                } else { 
+                    snake.pop();  
+                }
+            }
+            
+            function changeDirection(event) {  
+                const LEFT_KEY = 37;  
+                const RIGHT_KEY = 39;  
+                const UP_KEY = 38;  
+                const DOWN_KEY = 40;
+                const keyPressed = event.keyCode;  
+                const goingUp = dy === -10;  
+                const goingDown = dy === 10;  
+                const goingRight = dx === 10;  
+                const goingLeft = dx === -10;
+                if (keyPressed === LEFT_KEY && !goingRight) 
+                {    
+                    dx = -10;    
+                    dy = 0;  
+                }
+                if (keyPressed === UP_KEY && !goingDown) 
+                {   
+                    dx = 0;    
+                    dy = -10;  
+                }
+                if (keyPressed === DOWN_KEY && !goingUp) 
+                {   
+                    dx = 0;    
+                    dy = 10;  
+                }
+                if (keyPressed === RIGHT_KEY && !goingLeft) 
+                {   
+                    dx = 10;    
+                    dy = 0;  
+                }
+            }
+            function randomTen(min, max) 
+            {  
+                return Math.round((Math.random() * (max-min) + min) / 10) * 10;
+            }
+            function createFood() {  
+                foodX = randomTen(0, gameCanvas.width - 10);  
+                foodY = randomTen(0, gameCanvas.height - 10);  
+                snake.forEach(function isFoodOnSnake(part) 
+                {    
+                    const foodIsOnSnake = part.x == foodX && part.y == foodY    
+                    if (foodIsOnSnake) {     
+                    createFood();}
+                });
+            }
+            function drawFood() 
+            { 
+                ctx.fillStyle = 'orange'; 
+                ctx.strokestyle = 'lightorange';
+                ctx.lineWidth=1; 
+                ctx.fillRect(foodX, foodY, 10, 10); 
+                ctx.strokeRect(foodX, foodY, 10, 10);
+            }
+            function didGameEnd() {  
+                for (let i = 4; i < snake.length; i++) 
+                {
+                    let didCollide = snake[i].x === snake[0].x && snake[i].y === snake[0].y;
+                    if (didCollide)
+                    {
+                        return true; 
+                    }
+                }
+                const hitLeftWall = snake[0].x < 0;  
+                const hitRightWall = snake[0].x > gameCanvas.width - 10;  
+                const hitToptWall = snake[0].y < 0;  
+                const hitBottomWall = snake[0].y > gameCanvas.height - 10;
+                return hitLeftWall||hitBottomWall||hitRightWall||hitToptWall;
+            }
+            function main() {  
+                setTimeout(function onTick() {  
+                    
+                    borderColor();  
+                    drawFood();  
+                    advanceSnake();    
+                    drawSnake(); 
+                    if(didGameEnd()){
+                        document.getElementById("gameCanvas").style.visibility="hidden";
+                        popup.classList.add("open-popup");
+                        return;
+                    }
+                    else{
+                        main();
+                    }
+                      }, 100)
+                }
+
+                createFood();
+                main();
+            document.addEventListener("keydown", changeDirection)
+            </script>
+
+
+</html>
